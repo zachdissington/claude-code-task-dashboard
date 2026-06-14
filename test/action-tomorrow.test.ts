@@ -9,6 +9,7 @@ import {
   makeApp,
   todayDate,
   tomorrowDate,
+  FULL,
 } from "./helpers.js";
 import { getSnapshot } from "../src/data/snapshot.js";
 
@@ -33,7 +34,7 @@ function tomorrowFiles(dir: string): Array<{ title: string; status: string }> {
 }
 
 /** Round-trip the Tomorrow lane write kinds against the real store (restored after). */
-describe("POST /action — Tomorrow lane (meals-pick + training-schedule)", () => {
+describe.skipIf(!FULL)("POST /action — Tomorrow lane (meals-pick + training-schedule)", () => {
   let app: FastifyInstance;
   let restore: () => void;
   beforeAll(async () => {

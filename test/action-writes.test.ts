@@ -8,6 +8,7 @@ import {
   makeApp,
   readFrontmatter,
   writeThrowawayTask,
+  FULL,
 } from "./helpers.js";
 import { getSnapshot } from "../src/data/snapshot.js";
 
@@ -17,7 +18,7 @@ function localToday(): string {
 }
 
 /** Round-trip writes through the REAL update-task.py writer. */
-describe("POST /action — round-trip writes", () => {
+describe.skipIf(!FULL)("POST /action — round-trip writes", () => {
   let app: FastifyInstance;
   const created: string[] = [];
   beforeAll(async () => {

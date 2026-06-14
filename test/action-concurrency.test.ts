@@ -8,12 +8,13 @@ import {
   readFrontmatter,
   runScript,
   writeThrowawayTask,
+  FULL,
 } from "./helpers.js";
 
 /** A dashboard write and a direct CLI write firing at once on two different
  *  tasks must both land, neither file corrupt (the per-file locks in
  *  task_helpers are what make this safe — the dashboard adds no second writer). */
-describe("POST /action — concurrency with a direct CLI write", () => {
+describe.skipIf(!FULL)("POST /action — concurrency with a direct CLI write", () => {
   let app: FastifyInstance;
   const created: string[] = [];
   beforeAll(async () => {

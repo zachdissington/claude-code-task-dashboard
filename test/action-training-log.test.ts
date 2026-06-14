@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { join } from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
-import { authHeaders, config, deleteIfExists, makeApp } from "./helpers.js";
+import { authHeaders, config, deleteIfExists, FULL, makeApp } from "./helpers.js";
 
 const ID = "T-2099-12-31-941";
 const PATH = join(config.TRAINING_TASKS_DIR, `${ID}.md`);
@@ -38,7 +38,7 @@ function writeLiftTask(): void {
   writeFileSync(PATH, body, "utf-8");
 }
 
-describe("training-log action", () => {
+describe.skipIf(!FULL)("training-log action", () => {
   afterEach(() => deleteIfExists(PATH));
 
   it("writes a set into the matching ## Session Log cell", async () => {

@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  authHeaders, config, deleteIfExists, makeApp, readFrontmatter, todayDate,
+  authHeaders, config, deleteIfExists, FULL, makeApp, readFrontmatter, todayDate,
 } from "./helpers.js";
 
 /**
@@ -13,7 +13,7 @@ import {
  * today. Non-destructive: a sentinel 2099 task + full backup/restore of the live
  * morning-plan state.
  */
-describe("POST /action — plan-accept / plan-reject (morning proposal)", () => {
+describe.skipIf(!FULL)("POST /action — plan-accept / plan-reject (morning proposal)", () => {
   let app: FastifyInstance;
   const id = "T-2099-12-31-402";
   const ws = "Internal/task-dashboard";

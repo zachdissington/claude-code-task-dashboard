@@ -2,10 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { join } from "node:path";
 import { writeFileSync } from "node:fs";
-import { authHeaders, config, deleteIfExists, makeApp, readFrontmatter, tomorrowDate } from "./helpers.js";
+import { authHeaders, config, deleteIfExists, FULL, makeApp, readFrontmatter, tomorrowDate } from "./helpers.js";
 
 /** Round-trip the schedule-task action (commit a work task to tomorrow / clear). */
-describe("POST /action — schedule-task (Tomorrow's work)", () => {
+describe.skipIf(!FULL)("POST /action — schedule-task (Tomorrow's work)", () => {
   let app: FastifyInstance;
   // A throwaway work task in a real project tasks dir (sentinel id, scheduled_date null).
   const id = "T-2099-12-31-401";

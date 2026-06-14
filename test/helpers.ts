@@ -20,6 +20,15 @@ const execFileAsync = promisify(execFile);
 
 export const TOKEN = "test-write-token-do-not-ship";
 
+/**
+ * Whether the real Python writer layer is available — i.e. a full private
+ * workspace, not a standalone/public clone. `test/setup.ts` flips on DEMO when
+ * no workspace `.claude/scripts` is found, so `!DEMO` ⇔ the writers are present.
+ * Write round-trip suites gate on this (`describe.skipIf(!FULL)`) so a public
+ * clone runs the hermetic subset green while the private workspace runs them all.
+ */
+export const FULL = !config.DEMO;
+
 /** Headers that pass the Origin + Host + token guards. */
 export function authHeaders(overrides: Record<string, string> = {}): Record<string, string> {
   return {

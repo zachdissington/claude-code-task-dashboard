@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "../src/config.js";
+import { FULL } from "./helpers.js";
 
 /**
  * Lockstep guard: the dashboard's inlined `planCmp` (the green NEXT hero sort)
@@ -74,7 +75,7 @@ function pythonOrder(rows: ReturnType<typeof toPyRow>[]): string[] {
   return JSON.parse(out.trim());
 }
 
-describe("planCmp ⇆ plan_sort_key lockstep", () => {
+describe.skipIf(!FULL)("planCmp ⇆ plan_sort_key lockstep", () => {
   it("orders oldest-committed first when priority + client-first tie", () => {
     const planCmp = extractPlanCmp();
     const jsOrder = FIXTURE.slice().sort(planCmp).map((r) => r.id);
