@@ -1,0 +1,35 @@
+{
+  "generated": "2026-01-07T09:00:00Z",
+  "total": 7,
+  "daily_capacity_min": 360,
+  "groups": [
+    {
+      "project": "Internal/example-tool",
+      "count": 3,
+      "minutes": 195,
+      "tasks": [
+        { "id": "T-2026-01-05-001", "title": "Wire the settings panel to the config store", "priority": "high", "project": "Internal/example-tool", "group": "Internal/example-tool", "group_display": "Example Tool", "group_klass": "internal", "time_estimate": 90, "fs_path": "Internal/example-tool/tasks/T-2026-01-05-001.md", "scheduled_date": null, "work_block": "morning", "rank": 1, "rank_reason": "Unblocks the rest of the settings work." },
+        { "id": "T-2026-01-05-002", "title": "Add a keyboard shortcut to toggle the sidebar", "priority": "medium", "project": "Internal/example-tool", "group": "Internal/example-tool", "group_display": "Example Tool", "group_klass": "internal", "time_estimate": 45, "fs_path": "Internal/example-tool/tasks/T-2026-01-05-002.md", "scheduled_date": null, "work_block": "anytime", "rank": 2 },
+        { "id": "T-2026-01-05-003", "title": "Write a quick-start section in the README", "priority": "low", "project": "Internal/example-tool", "group": "Internal/example-tool", "group_display": "Example Tool", "group_klass": "internal", "time_estimate": 60, "fs_path": "Internal/example-tool/tasks/T-2026-01-05-003.md", "scheduled_date": null, "work_block": "anytime", "rank": 3 }
+      ]
+    },
+    {
+      "project": "Clients/client-alpha",
+      "count": 2,
+      "minutes": 150,
+      "tasks": [
+        { "id": "T-2026-01-06-001", "title": "Build the onboarding intake form", "priority": "high", "project": "Clients/client-alpha", "group": "Clients/client-alpha", "group_display": "client-alpha", "group_klass": "client", "time_estimate": 90, "fs_path": "Clients/client-alpha/tasks/T-2026-01-06-001.md", "scheduled_date": null, "work_block": "morning", "rank": 1, "rank_reason": "Client is waiting on this to launch." },
+        { "id": "T-2026-01-06-002", "title": "Draft the kickoff summary email", "priority": "medium", "project": "Clients/client-alpha", "group": "Clients/client-alpha", "group_display": "client-alpha", "group_klass": "client", "time_estimate": 60, "fs_path": "Clients/client-alpha/tasks/T-2026-01-06-002.md", "scheduled_date": null, "work_block": "afternoon", "rank": 2 }
+      ]
+    },
+    {
+      "project": "Clients/client-beta",
+      "count": 2,
+      "minutes": 105,
+      "tasks": [
+        { "id": "T-2026-01-04-001", "title": "Migrate the contact list into the CRM", "priority": "medium", "project": "Clients/client-beta", "group": "Clients/client-beta", "group_display": "client-beta", "group_klass": "client", "time_estimate": 75, "fs_path": "Clients/client-beta/tasks/T-2026-01-04-001.md", "scheduled_date": null, "work_block": "anytime", "rank": 1 },
+        { "id": "T-2026-01-04-002", "title": "Set up the weekly reporting automation", "priority": "low", "project": "Clients/client-beta", "group": "Clients/client-beta", "group_display": "client-beta", "group_klass": "client", "time_estimate": 30, "fs_path": "Clients/client-beta/tasks/T-2026-01-04-002.md", "scheduled_date": null, "work_block": "anytime", "rank": 2 }
+      ]
+    }
+  ]
+}

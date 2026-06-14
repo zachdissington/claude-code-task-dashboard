@@ -1,0 +1,9 @@
+{
+  "_comment": "Optional manual layer for the Client commitments panel. Open-task and high-priority counts come from the task store automatically; this file adds the next promised deliverable + due date per client. The 'client' name must match the Clients/<name> folder (e.g. 'client-alpha'). A missing file is fine; the panel still shows counts.",
+  "_entry_shape": {
+    "client": "client-alpha",
+    "next_deliverable": "Phase 2 enrichment",
+    "due_date": "YYYY-MM-DD"
+  },
+  "clients": []
+}

@@ -1,0 +1,14 @@
+name = "dashboard-outbox"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# KV namespace for the durable queue. Create it (one-time, Zach) with:
+#   npx wrangler kv namespace create OUTBOX_KV
+# then paste the printed id below.
+[[kv_namespaces]]
+binding = "OUTBOX_KV"
+id = "<KV_NAMESPACE_ID>"
+
+# Secrets (NOT here — set via wrangler, never committed):
+#   npx wrangler secret put OUTBOX_TOKEN         # phone enqueue token (also in dashboard .env)
+#   npx wrangler secret put OUTBOX_ADMIN_TOKEN   # PC drain token (PC .env only)

@@ -1,0 +1,26 @@
+{
+  "windowDays": 14,
+  "total": 5,
+  "daily": [
+    { "date": "2026-01-02", "count": 1 },
+    { "date": "2026-01-03", "count": 2 },
+    { "date": "2026-01-05", "count": 1 },
+    { "date": "2026-01-06", "count": 1 }
+  ],
+  "recent": [
+    { "title": "Ship the v0.2 layout pass", "project": "Internal/example-tool", "closedAt": "2026-01-06" },
+    { "title": "Fix the trend chart axis labels", "project": "Internal/example-tool", "closedAt": "2026-01-05" }
+  ],
+  "byProject": [
+    { "project": "Internal/example-tool", "count": 3 },
+    { "project": "Clients/client-alpha", "count": 1 },
+    { "project": "Clients/client-beta", "count": 1 }
+  ],
+  "all": [
+    { "id": "T-2026-01-01-001", "title": "Scaffold the project", "project": "Internal/example-tool", "closedDate": "2026-01-02" },
+    { "id": "T-2026-01-02-001", "title": "Add the SSE refresh channel", "project": "Internal/example-tool", "closedDate": "2026-01-03" },
+    { "id": "T-2026-01-02-002", "title": "Sign the engagement", "project": "Clients/client-alpha", "closedDate": "2026-01-03" },
+    { "id": "T-2026-01-04-003", "title": "Fix the trend chart axis labels", "project": "Internal/example-tool", "closedDate": "2026-01-05" },
+    { "id": "T-2026-01-05-004", "title": "Hand off the first report", "project": "Clients/client-beta", "closedDate": "2026-01-06" }
+  ]
+}

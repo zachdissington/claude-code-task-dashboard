@@ -1,0 +1,23 @@
+# Cloudflare Tunnel config for the task-dashboard (optional mobile access).
+#
+# TEMPLATE — fill the two <PLACEHOLDER> values after `cloudflared tunnel login`
+# + `cloudflared tunnel create dashboard` (those are interactive).
+#
+# Pattern: a named tunnel on cfargotunnel.com — stable hostname, no domain
+# required.
+
+# The tunnel UUID printed by `cloudflared tunnel create dashboard`.
+tunnel: <TUNNEL_UUID>
+# The credentials JSON `tunnel create` writes (usually ~/.cloudflared/<UUID>.json).
+credentials-file: %USERPROFILE%\.cloudflared\<TUNNEL_UUID>.json
+
+# Route the public hostname → the local dashboard. The hostname is either the
+# tunnel's cfargotunnel.com address or a CNAME you map in Cloudflare DNS.
+# IMPORTANT: put Cloudflare Access (email-OTP, locked to you) IN FRONT of this
+# hostname — the dashboard's read routes are unauthenticated, so Access is what
+# gates the whole task store at the edge. Set DASHBOARD_PUBLIC_ORIGIN in the
+# .env to this same https origin so writes pass the Origin/Host guards.
+ingress:
+  - hostname: <TUNNEL_HOSTNAME>     # e.g. dash.example.com or <UUID>.cfargotunnel.com
+    service: http://localhost:8790
+  - service: http_status:404        # catch-all

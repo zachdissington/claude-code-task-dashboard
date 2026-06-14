@@ -1,0 +1,23 @@
+{
+  "_comment": "Business scoreboard. Edit by hand or wire your own exporter. contracts[] drives MRR / active-clients / next-renewal; scoreboard holds hand-entered scalars; deferred holds KPIs you can wire to your own billing/outreach later. All values here are placeholders.",
+  "_contract_shape": {
+    "client": "Acme",
+    "monthly_value": 750,
+    "status": "active | paused | ended",
+    "renewal_date": "YYYY-MM-DD or null"
+  },
+  "last_updated": null,
+  "claude_subscription_usd": 200,
+  "contracts": [],
+  "scoreboard": {
+    "pipeline_value": null,
+    "proposals_outstanding": null,
+    "ar_unpaid": null
+  },
+  "deferred": {
+    "cac": null,
+    "ltv_cac_ratio": null,
+    "outreach_volume": null,
+    "_note": "wire to your own billing/outreach source when available"
+  }
+}
