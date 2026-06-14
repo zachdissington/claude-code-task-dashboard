@@ -73,6 +73,7 @@ header h1{color:var(--accent);font-size:13px;letter-spacing:2px;text-transform:u
 #status{font-size:10px;padding:2px 7px;border-radius:3px;background:var(--panel-2);border:1px solid var(--line)}
 #status.connected{color:var(--accent);border-color:var(--accent)}
 #status.disconnected{color:var(--danger);border-color:var(--danger)}
+#status.polling{color:var(--muted);border-color:var(--line)}
 #generated{color:var(--muted);font-size:10px;margin-left:auto;opacity:.7}
 
 /* single view (no view toggle — consolidated 2026-05-28) */
@@ -431,13 +432,14 @@ table.ptable{width:100%;border-collapse:collapse;font-size:10px}
 .pexrow{display:flex;gap:5px;align-items:center;margin:1px 0 2px 0;font-size:10px}
 .pexrow .pex-nm{color:var(--text);min-width:72px;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pexrow .pex-tgt{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pexrow .pexlog{width:78px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-size:10px;border-radius:3px;padding:1px 4px;font-variant-numeric:tabular-nums}
-.pexrow .pexlog:focus{outline:none;border-color:var(--accent)}
+.pexrow .pexlog{width:78px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-size:10px;border-radius:3px;padding:1px 4px;font-variant-numeric:tabular-nums;box-shadow:inset 0 -1px 0 rgba(57,217,139,.28)}
+.pexrow .pexlog:focus{outline:none;border-color:var(--accent);box-shadow:none}
 .pexrow .pex-prog{color:var(--accent);font-size:9px;white-space:nowrap}
 /* Endurance-day readout — a session of distance/duration/zone steps, set apart
    from the lift input table with a subtle accent rail. */
 .pexlist.cardio{border-left:2px solid var(--internal);padding-left:7px;margin-left:22px}
 .pexlist.cardio .pex{color:var(--text);opacity:.82}
+.pexlist.cardio .pex-cap{font-size:8px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);opacity:.7;margin-bottom:2px}
 
 /* Short-viewport compress-to-fit. The fixed panel heights below assume a
    ~1080px-tall monitor; on a scaled laptop (1280x800 canvas at 150% Windows
@@ -528,7 +530,7 @@ body.compact .grid{overflow:visible}
         <div class="panel-title"><span>Today's meetings</span><span class="count" id="calendar-count"></span></div>
         <div class="panel-body" id="calendar"></div>
       </div>
-      <div class="panel" data-cell="today">
+      <div class="panel" data-cell="today-personal">
         <div class="panel-title"><span>Today &middot; personal</span><span class="count" id="today-count"></span></div>
         <div class="panel-body" id="today"></div>
       </div>
@@ -1054,8 +1056,25 @@ function renderWorkQueue(s){
   function sec(label,count,cls){
     return '<div class="wq-sec '+(cls||'')+'"><span>'+label+'</span><span class="wq-sec-n">'+count+'</span></div>';
   }
-  function upnextRow(g){
-    var t=g.tasks[0],more=g.tasks.length-1;
+  // Secondary up-next row: a group's 2nd/3rd-ranked task, surfaced inline by the
+  // fill pass below. Same chip/meta vocabulary as the main row, no pull/why.
+  function secRow(st,g){
+    var sm=[];
+    if(st.time_estimate>0)sm.push(st.time_estimate+'m');
+    if(st.work_block)sm.push(esc(st.work_block));
+    var sqw=(st.time_estimate>0&&st.time_estimate<=30);
+    return '<div class="trow click upnext-sec" data-path="'+esc(st.fs_path||'')+'">'
+      +'<span class="pri '+priClass(st.priority)+'">'+priLetter(st.priority)+'</span>'
+      +'<span class="tchip '+g.klass+'" title="'+esc(st.project)+'">'+esc(g.display)+'</span>'
+      +'<span class="trow-title" title="'+esc(st.title)+'">'+esc(st.title)+'</span>'
+      +(sqw?'<span class="tag green">quick</span>':'')
+      +(sm.length?'<span class="tmeta">'+sm.join(' &middot; ')+'</span>':'')
+      +'</div>';
+  }
+  function upnextRow(g,extra){
+    var t=g.tasks[0];
+    extra=Math.max(0,Math.min(extra||0,g.tasks.length-1));
+    var more=g.tasks.length-1-extra;
     var meta=[];
     if(t.time_estimate>0)meta.push(t.time_estimate+'m');
     if(t.work_block)meta.push(esc(t.work_block));
@@ -1067,6 +1086,8 @@ function renderWorkQueue(s){
     var pull=fitsToday
       ?'<span class="wq-pull writeable" data-kind="pull-in" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" title="Commit to today ('+rem+'m free)">+ Today</span>'
       :'';
+    var sec2='';
+    for(var sxi=1;sxi<=extra;sxi++)sec2+=secRow(g.tasks[sxi],g);
     return '<div class="upnext">'
       +'<div class="trow click" data-path="'+esc(t.fs_path||'')+'">'
         +'<span class="pri '+priClass(t.priority)+'">'+priLetter(t.priority)+'</span>'
@@ -1077,6 +1098,7 @@ function renderWorkQueue(s){
         +pull
       +'</div>'
       +(t.rank_reason?'<div class="upnext-why">'+esc(t.rank_reason)+'</div>':'')
+      +sec2
       +(more>0?'<div class="upnext-more click" data-rollup="'+esc(g.group)+'">+'+more+' more in '+esc(g.display)+'</div>':'')
       +'</div>';
   }
@@ -1097,7 +1119,24 @@ function renderWorkQueue(s){
   var body='';
   body+=sec('Up next',umbOrder.length,'');
   if(!umbOrder.length)body+='<div class="empty">Nothing ready &mdash; all parked or on today\\u2019s plan.</div>';
-  else for(var u=0;u<umbOrder.length;u++)body+=upnextRow(umb[umbOrder[u]]);
+  else {
+    // Fill pass (roast-v2 F7): when few projects leave the prime action column
+    // short, surface each top group's next-ranked task(s) inline rather than
+    // stretching a near-empty panel. Round-robin so the spread stays even; a
+    // no-op once there are already >= FILL_TARGET groups (long backlog).
+    var FILL_TARGET=12;
+    var extra={},budget=Math.max(0,FILL_TARGET-umbOrder.length),guard=0;
+    while(budget>0&&guard<500){
+      var moved=false;
+      for(var ui=0;ui<umbOrder.length&&budget>0;ui++){
+        var gk=umbOrder[ui];
+        if((extra[gk]||0)<umb[gk].tasks.length-1){extra[gk]=(extra[gk]||0)+1;budget--;moved=true;}
+      }
+      if(!moved)break;
+      guard++;
+    }
+    for(var u=0;u<umbOrder.length;u++)body+=upnextRow(umb[umbOrder[u]],extra[umbOrder[u]]||0);
+  }
   if(parked.length){
     // Newest-waiting first surfaces the stalest; collapsed by default so it
     // doesn't crowd the queue, but always present so nothing falls off the radar.
@@ -1524,6 +1563,36 @@ function todayMealRow(slot,picked,suggestions,date,exp){
     +'<span class="pname'+(recipe?'':' ph')+'">'+(recipe?esc(recipe):'\\u2014 schedule \\u2014')+'</span>'
     +'<span class="pchg" data-expand="'+key+'">'+(recipe?'change':'pick')+'</span></div>';
 }
+/* Meals section: collapse unscheduled slots into ONE pick affordance so an
+   unplanned day doesn't render 5 identical "— schedule —" dashes that read as
+   broken in peripheral vision. Expanding (today:meals-all) shows the full
+   5-slot picker; scheduled slots always render as their own rows. (roast-v2 F8) */
+function todayMealsSection(pickedBySlot,sugBySlot,date,exp){
+  var scheduled=[],empty=[];
+  for(var k=0;k<SLOTS_ORDER.length;k++){
+    var slot=SLOTS_ORDER[k];
+    (pickedBySlot[slot]?scheduled:empty).push(slot);
+  }
+  // Fully planned OR user expanded the picker → render every slot row in order.
+  if(!empty.length||exp['today:meals-all']){
+    var hh='';
+    for(var a=0;a<SLOTS_ORDER.length;a++)hh+=todayMealRow(SLOTS_ORDER[a],pickedBySlot[SLOTS_ORDER[a]],sugBySlot[SLOTS_ORDER[a]],date,exp);
+    if(empty.length)
+      hh+='<div class="prow meals-collapse" data-expand="today:meals-all">'
+        +'<span class="pcheck"></span><span class="pslot">Meals</span>'
+        +'<span class="pname ph">'+empty.length+' unscheduled</span>'
+        +'<span class="pchg">collapse</span></div>';
+    return hh;
+  }
+  // Collapsed: scheduled rows first, then a single affordance for the empties.
+  var h='';
+  for(var b=0;b<scheduled.length;b++)h+=todayMealRow(scheduled[b],pickedBySlot[scheduled[b]],sugBySlot[scheduled[b]],date,exp);
+  h+='<div class="prow meals-collapse'+(scheduled.length?'':' empty')+'" data-expand="today:meals-all">'
+    +'<span class="pcheck"></span><span class="pslot">Meals</span>'
+    +'<span class="pname ph">'+(scheduled.length?(empty.length+' unscheduled'):'none planned')+'</span>'
+    +'<span class="pchg">pick</span></div>';
+  return h;
+}
 /* Workout type (column) + name from a session string — de-dups the old triple
    "Training". "Upper A"->Lift/"Upper A"; "Swim — Technique"->Swim/"Technique". */
 function workoutType(session){var s=String(session||'').toLowerCase();
@@ -1559,7 +1628,7 @@ function todayTrainingRow(tr,rotation,date,exp){
   }else if(scheduled&&tr.todayExercises&&tr.todayExercises.length){
     // Endurance day: concrete distance/duration/zone readout (from program.md),
     // styled distinct from the lift table so a cardio day reads as a cardio day.
-    h+='<div class="pexlist cardio">';
+    h+='<div class="pexlist cardio"><div class="pex-cap">(readout)</div>';
     for(var e2=0;e2<tr.todayExercises.length;e2++)h+='<div class="pex">'+esc(tr.todayExercises[e2])+'</div>';
     h+='</div>';
   }
@@ -1575,7 +1644,7 @@ function renderToday(s){
   var h=errBlock(mealsD.error);
   h+='<div class="today-sec">Training</div>'+todayTrainingRow(tr,rotation,date,exp);
   h+='<div class="today-sec">Meals</div>';
-  for(var k=0;k<SLOTS_ORDER.length;k++)h+=todayMealRow(SLOTS_ORDER[k],pickedBySlot[SLOTS_ORDER[k]],sugBySlot[SLOTS_ORDER[k]],date,exp);
+  h+=todayMealsSection(pickedBySlot,sugBySlot,date,exp);
   var md=0;for(var z=0;z<items.length;z++)if(items[z].status==='complete')md++;
   $('today-count').textContent=items.length?'meals '+md+'/'+items.length:'';
   $('today').innerHTML=h;
@@ -1727,7 +1796,7 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
         // Overdue still open => the day is NOT complete; show only the triage
         // prompt — overdue must be cleared same-day.
         h+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-          +overdue+' overdue &mdash; triage in Claude Code</div>';
+          +overdue+' overdue &middot; triage in Claude Code</div>';
       else
         h+='<div class="empty" style="color:var(--accent)">Complete</div>';
       $(elId).innerHTML=h;return;
@@ -1743,7 +1812,7 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
         +'<button class="prop-btn rej" id="plan-reject-btn">Reject</button></span></div>';
       if(prop.triageNeeded&&prop.overdueCount>0)
         ph+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-          +prop.overdueCount+' overdue need triage</div>';
+          +prop.overdueCount+' overdue &middot; triage in Claude Code</div>';
       var pmin=0;for(var pk=0;pk<prop.tasks.length;pk++)pmin+=(prop.tasks[pk].estMin||0);
       var p0=prop.tasks[0];
       ph+='<div class="nextrow"><span class="nx">PLAN</span>'
@@ -1781,7 +1850,7 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
   // Non-empty case — overdue alert (when present) sits above the task list.
   if(overdue>0)
     h+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-      +overdue+' overdue &mdash; triage in Claude Code</div>';
+      +overdue+' overdue &middot; triage in Claude Code</div>';
   var sorted=tasks.slice().sort(planCmp);
   // Hero the single next action (top of the sorted plan) so the board answers
   // "what do I do next" at a glance; the rest follow as the standard list.
@@ -2147,7 +2216,14 @@ function refresh(){
 function connectSSE(){
   var es=new EventSource('/events');
   es.onopen=function(){statusEl.textContent='connected';statusEl.className='connected';};
-  es.onerror=function(){statusEl.textContent='reconnecting';statusEl.className='disconnected';};
+  es.onerror=function(){
+    // Demote to a calm "polling" when the SSE drops but the last snapshot is
+    // still fresh (<60s) — a red alarm there is a false peripheral signal,
+    // redundant with the data-age cue. Genuine staleness still reads red. (F10)
+    var fresh=lastSnapshot&&lastSnapshot.generated&&(Date.now()-new Date(lastSnapshot.generated).getTime()<60000);
+    if(fresh){statusEl.textContent='polling';statusEl.className='polling';}
+    else{statusEl.textContent='reconnecting';statusEl.className='disconnected';}
+  };
   es.addEventListener('refresh',refresh);
 }
 // === Laptop auto-fit ====================================================
