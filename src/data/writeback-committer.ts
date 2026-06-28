@@ -26,7 +26,7 @@ function runCommit(): void {
   execFile(
     config.PYTHON_BIN,
     [config.AUTOCOMMIT_SCRIPT, "--workspace", WORKSPACE_ROOT],
-    { timeout: config.PYTHON_TIMEOUT_MS, cwd: WORKSPACE_ROOT },
+    { timeout: config.PYTHON_TIMEOUT_MS, cwd: WORKSPACE_ROOT, windowsHide: true },
     (err, stdout, stderr) => {
       inFlight = false;
       if (err) {

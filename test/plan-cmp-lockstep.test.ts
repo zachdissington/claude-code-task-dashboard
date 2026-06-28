@@ -46,6 +46,15 @@ const FIXTURE = [
   { id: "T-2026-06-01-001", priority: "medium", group: "voice-jarvis", group_klass: "internal", rank: 5, time_estimate: 180, scheduled_at: null, created: "2026-06-01T00:23:10Z" },
 ];
 
+/** Priority-over-client set: a HIGH-priority internal task must outrank a
+ *  LOW-priority client task. Under the old (client-first-leading) key the
+ *  low-pri client task won the #1 slot; the fix makes importance dominate and
+ *  demotes client-first to a tiebreak within equal priority. */
+const PRIORITY_FIXTURE = [
+  { id: "T-2026-06-10-002", priority: "low", group: "client-acme", group_klass: "client", rank: 1, time_estimate: 30, scheduled_at: null, created: "2026-06-10T10:00:00Z" },
+  { id: "T-2026-06-10-001", priority: "high", group: "voice-jarvis", group_klass: "internal", rank: 1, time_estimate: 30, scheduled_at: null, created: "2026-06-10T10:00:00Z" },
+];
+
 /** Map a neutral fixture row into the shape Python plan_sort_key expects. */
 function toPyRow(r: (typeof FIXTURE)[number]) {
   return {
@@ -87,6 +96,20 @@ describe.skipIf(!FULL)("planCmp ⇆ plan_sort_key lockstep", () => {
     const planCmp = extractPlanCmp();
     const jsOrder = FIXTURE.slice().sort(planCmp).map((r) => r.id);
     const pyOrder = pythonOrder(FIXTURE.map(toPyRow));
+    expect(jsOrder).toEqual(pyOrder);
+  });
+
+  it("ranks a high-pri internal task above a low-pri client task", () => {
+    const planCmp = extractPlanCmp();
+    const jsOrder = PRIORITY_FIXTURE.slice().sort(planCmp).map((r) => r.id);
+    // High-pri internal wins the #1 slot; low-pri client follows (was reversed).
+    expect(jsOrder).toEqual(["T-2026-06-10-001", "T-2026-06-10-002"]);
+  });
+
+  it("priority-over-client: JS and Python agree", () => {
+    const planCmp = extractPlanCmp();
+    const jsOrder = PRIORITY_FIXTURE.slice().sort(planCmp).map((r) => r.id);
+    const pyOrder = pythonOrder(PRIORITY_FIXTURE.map(toPyRow));
     expect(jsOrder).toEqual(pyOrder);
   });
 });

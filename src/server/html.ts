@@ -176,11 +176,21 @@ header h1{color:var(--accent);font-size:13px;letter-spacing:2px;text-transform:u
 /* Up next: one recommended-next task per project group, with the rank's "why"
    and a click-through to the rest of the group. */
 .upnext{margin-bottom:5px}
-.upnext-why{color:var(--muted-2);font-size:9px;line-height:1.25;padding:0 3px 0 22px;margin-top:-1px}
 .upnext-more{color:var(--muted);font-size:8.5px;padding:1px 3px 0 22px;cursor:pointer;opacity:.75}
 .upnext-more:hover{opacity:1;color:var(--accent)}
 .wq-pull{margin-left:auto;flex-shrink:0;color:var(--accent);font-size:9px;border:1px solid var(--accent);border-radius:3px;padding:0 4px;cursor:pointer;opacity:.8;white-space:nowrap}
 .wq-pull:hover{opacity:1;background:var(--accent);color:var(--bg)}
+.wq-pull+.wq-pull{margin-left:4px}
+.wq-pull.tmrw{color:var(--client);border-color:var(--client)}
+.wq-pull.tmrw:hover{background:var(--client);color:var(--bg)}
+.wq-pull.decommit{color:var(--muted);border-color:var(--line);font-weight:bold;padding:0 6px}
+.wq-pull.decommit:hover{background:var(--danger);border-color:var(--danger);color:var(--bg)}
+.wq-tabs{display:flex;gap:4px;margin:2px 0 6px;flex-shrink:0}
+.wq-tab{background:none;border:1px solid var(--line);border-radius:3px;color:var(--muted);font-size:9px;letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;cursor:pointer}
+.wq-tab:hover{color:var(--text);border-color:var(--muted)}
+.wq-tab.on{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:bold}
+.wq-tab .wq-tab-n{font-weight:bold}
+.wq-tab.on .wq-tab-n{color:var(--bg)}
 /* work-queue footer: Workload ledger (category x count x est hours). The
    colored category names double as the chip-color legend. */
 .wq-legend{padding-top:6px;margin-top:6px;border-top:1px solid var(--line);flex-shrink:0}
@@ -263,12 +273,15 @@ table.ptable{width:100%;border-collapse:collapse;font-size:10px}
 
 /* NEXT hero row — the single next task, emphasised so the eye lands on the
    board's actual answer ("what do I do next") before the ambient panels. */
-.nextrow{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:5px;
+.nextrow{display:flex;flex-direction:column;gap:3px;padding:6px 8px;margin-bottom:5px;
   background:linear-gradient(90deg,rgba(53,217,139,.10),rgba(53,217,139,.02));
   border:1px solid rgba(53,217,139,.30);border-left:3px solid var(--accent);border-radius:4px}
-.nextrow .nx{font-size:8px;font-weight:bold;letter-spacing:1px;color:var(--accent);flex-shrink:0}
-.nextrow .nx-title{flex:1;color:#eaf3ee;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nextrow .nx-meta{color:#8aa99a;font-size:9px;flex-shrink:0;white-space:nowrap}
+.nextrow .nx-main{display:flex;align-items:flex-start;gap:7px}
+.nextrow .nx{font-size:8px;font-weight:bold;letter-spacing:1px;color:var(--accent);flex-shrink:0;margin-top:2px}
+.nextrow .nx-title{flex:1;color:#eaf3ee;font-size:12px;font-weight:600;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nextrow .nx-detail{display:flex;align-items:center;gap:6px;padding-left:20px}
+.nextrow .nx-meta{color:#8aa99a;font-size:9px;white-space:nowrap}
 
 /* 7am morning auto-plan proposal (T-2026-05-29-001) — replaces the empty-plan
    alarm when a plan is proposed for an uncommitted day. */
@@ -287,6 +300,21 @@ table.ptable{width:100%;border-collapse:collapse;font-size:10px}
 .trow-title{flex:1;color:#ccc;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trow-proj{color:#00b894;font-size:9px;flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trow-est{color:#5a6a62;font-size:9px;flex-shrink:0;width:30px;text-align:right}
+
+/* stacked task row — title on its own (up-to-2-line) row, detail beneath */
+.trow2{padding:4px 3px;border-bottom:1px solid #141414}
+.trow2:last-child{border-bottom:none}
+.trow2.click{cursor:pointer;border-radius:3px}
+.trow2.click:hover{background:var(--panel-2)}
+.trow2.stale{box-shadow:inset 2px 0 0 var(--warning)}
+.t2-main{display:flex;align-items:flex-start;gap:6px}
+.t2-title{flex:1;color:#ccc;font-size:11px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.t2-detail{display:flex;align-items:center;gap:6px;margin-top:2px;padding-left:19px}
+.t2-meta{color:#5a6a62;font-size:9px;white-space:nowrap}
+.t2-meta.wait{color:var(--client)}
+.t2-meta.wait.stale{color:var(--warning)}
+.t2-acts{margin-left:auto;display:flex;gap:4px;flex-shrink:0}
+.t2-acts .wq-pull,.t2-acts .wq-pull+.wq-pull{margin-left:0}
 
 
 /* generic rows */
@@ -603,7 +631,8 @@ function rankKey(t){
 }
 function rankLex(a,c){var ka=rankKey(a),kc=rankKey(c);for(var i=0;i<ka.length;i++){if(ka[i]!==kc[i])return ka[i]-kc[i];}return 0;}
 /* Canonical "top of today" order — mirrors task_helpers.plan_sort_key, the single
-   source of truth shared with plan-day.py + next-task.py: client-first, priority,
+   source of truth shared with plan-day.py + next-task.py: priority FIRST
+   (importance dominates), then client-first as a tiebreak WITHIN equal priority,
    then OLDEST-COMMITTED first AT DATE GRANULARITY (scheduled_at truncated to
    YYYY-MM-DD — when it landed on its date — falling back to created), then cluster
    by project and run each project's rank (do-first) order, quick wins, id as the
@@ -611,12 +640,14 @@ function rankLex(a,c){var ka=rankKey(a),kc=rankKey(c);for(var i=0;i<ka.length;i+
    provably equals next-task.py top. Keep in lockstep with plan_sort_key — the age
    key is date-granular so same-day tasks tie and fall through to group + rank,
    letting the rank pass (not an incidental creation-time difference) decide
-   same-day order; across days the longest-waiting task still floats up. */
+   same-day order; across days the longest-waiting task still floats up.
+   Priority leads (not client-first) so a high-pri internal task beats a low-pri
+   client one — client reputation only breaks ties among equally-important work. */
 function planCmp(a,b){
-  var ac=(a.group_klass==='client')?0:1,bc=(b.group_klass==='client')?0:1;
-  if(ac!==bc)return ac-bc;
   var ap=PRI_RANK[priKey(a.priority)],bp=PRI_RANK[priKey(b.priority)];
   if(ap!==bp)return ap-bp;
+  var ac=(a.group_klass==='client')?0:1,bc=(b.group_klass==='client')?0:1;
+  if(ac!==bc)return ac-bc;
   var as=(a.scheduled_at||a.created||'').slice(0,10),bs=(b.scheduled_at||b.created||'').slice(0,10);
   if(as!==bs)return as<bs?-1:1;
   var ag=a.group||'',bg=b.group||'';if(ag!==bg)return ag<bg?-1:1;
@@ -1020,12 +1051,16 @@ function renderWorkQueue(s){
   // A task committed to today's plan (scheduled_date===today) shows in the
   // Today's plan panel — exclude it from every Work-queue section so it isn't
   // double-documented. Overdue (<today) and unscheduled tasks stay on-deck.
+  var tomorrow=localDateStr(1);
   function onPlan(t){return t.scheduled_date===today;}
-  // Blocked tasks are PARKED — readiness, not importance, so they keep their
-  // priority but leave the active queue into a collapsed "Parked" group. The
-  // active "Up next" only ranks work that can actually move now.
+  function onTomorrow(t){return t.scheduled_date===tomorrow;}
+  // Three lanes, now surfaced as tabs:
+  //  - Parked: blocked (readiness, not importance) — keeps priority, off the active queue.
+  //  - Tomorrow: explicitly committed for tomorrow (its own tab + glance).
+  //  - Up next (deck): everything ready to move now.
   var parked=allTasks(b).filter(function(t){return !onPlan(t)&&isBlocked(t);});
-  var deck=allTasks(b).filter(function(t){return !onPlan(t)&&!isBlocked(t);});
+  var tomorrowTasks=allTasks(b).filter(function(t){return !onPlan(t)&&!isBlocked(t)&&onTomorrow(t);});
+  var deck=allTasks(b).filter(function(t){return !onPlan(t)&&!isBlocked(t)&&!onTomorrow(t);});
   /* Up next — the folded queue. One row per umbrella group (project_groups.py),
      showing that group's recommended-next ACTIONABLE task. "Do first" order:
      the LLM rank (rank_tasks.py, the synthesized order) leads; unranked groups
@@ -1063,13 +1098,10 @@ function renderWorkQueue(s){
     if(st.time_estimate>0)sm.push(st.time_estimate+'m');
     if(st.work_block)sm.push(esc(st.work_block));
     var sqw=(st.time_estimate>0&&st.time_estimate<=30);
-    return '<div class="trow click upnext-sec" data-path="'+esc(st.fs_path||'')+'">'
-      +'<span class="pri '+priClass(st.priority)+'">'+priLetter(st.priority)+'</span>'
-      +'<span class="tchip '+g.klass+'" title="'+esc(st.project)+'">'+esc(g.display)+'</span>'
-      +'<span class="trow-title" title="'+esc(st.title)+'">'+esc(st.title)+'</span>'
+    var detail='<span class="tchip '+g.klass+'" title="'+esc(st.project)+'">'+esc(g.display)+'</span>'
       +(sqw?'<span class="tag green">quick</span>':'')
-      +(sm.length?'<span class="tmeta">'+sm.join(' &middot; ')+'</span>':'')
-      +'</div>';
+      +(sm.length?'<span class="t2-meta">'+sm.join(' &middot; ')+'</span>':'');
+    return rowStack(st,detail,'','upnext-sec');
   }
   function upnextRow(g,extra){
     var t=g.tasks[0];
@@ -1084,20 +1116,18 @@ function renderWorkQueue(s){
     var rem=(s.todayPlan&&s.todayPlan.remainingMinutes)||0;
     var fitsToday=t.id&&((t.time_estimate||0)<=rem);
     var pull=fitsToday
-      ?'<span class="wq-pull writeable" data-kind="pull-in" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" title="Commit to today ('+rem+'m free)">+ Today</span>'
+      ?'<span class="wq-pull writeable" data-kind="pull-in" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" title="Commit to today ('+rem+'m free)">+ Today</span>'
       :'';
+    var pullTmrw=t.id
+      ?'<span class="wq-pull tmrw writeable" data-kind="schedule-task" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" data-date="'+tomorrow+'" title="Commit to tomorrow">+ Tmrw</span>'
+      :'';
+    var detail='<span class="tchip '+g.klass+'" title="'+esc(t.project)+'">'+esc(g.display)+'</span>'
+      +(qw?'<span class="tag green">quick</span>':'')
+      +(meta.length?'<span class="t2-meta">'+meta.join(' &middot; ')+'</span>':'');
     var sec2='';
     for(var sxi=1;sxi<=extra;sxi++)sec2+=secRow(g.tasks[sxi],g);
     return '<div class="upnext">'
-      +'<div class="trow click" data-path="'+esc(t.fs_path||'')+'">'
-        +'<span class="pri '+priClass(t.priority)+'">'+priLetter(t.priority)+'</span>'
-        +'<span class="tchip '+g.klass+'" title="'+esc(t.project)+'">'+esc(g.display)+'</span>'
-        +'<span class="trow-title" title="'+esc(t.title)+'">'+esc(t.title)+'</span>'
-        +(qw?'<span class="tag green">quick</span>':'')
-        +(meta.length?'<span class="tmeta">'+meta.join(' &middot; ')+'</span>':'')
-        +pull
-      +'</div>'
-      +(t.rank_reason?'<div class="upnext-why">'+esc(t.rank_reason)+'</div>':'')
+      +rowStack(t,detail,pull+pullTmrw,'')
       +sec2
       +(more>0?'<div class="upnext-more click" data-rollup="'+esc(g.group)+'">+'+more+' more in '+esc(g.display)+'</div>':'')
       +'</div>';
@@ -1108,46 +1138,72 @@ function renderWorkQueue(s){
     var dw=daysWaiting(t),stale=isStaleDays(dw,STALE_DAYS);
     var badge=readinessBadge(t);  // typed readiness chip (⛓ deps / ⏳ external wait)
     var wait=dw==null?'':(dw+'d'+(stale?' \\u21bb chase':''));  // staleness age, its own chip
-    return '<div class="trow click'+(stale?' stale':'')+'" data-path="'+esc(t.fs_path||'')+'">'
-      +'<span class="pri '+priClass(t.priority)+'">'+priLetter(t.priority)+'</span>'
-      +'<span class="tchip '+kl+'" title="'+esc(t.project)+'">'+esc(dsp)+'</span>'
-      +'<span class="trow-title" title="'+esc(t.title)+'">'+esc(t.title)+'</span>'
+    var detail='<span class="tchip '+kl+'" title="'+esc(t.project)+'">'+esc(dsp)+'</span>'
       +badge
-      +(wait?'<span class="tmeta wait'+(stale?' stale':'')+'">'+wait+'</span>':'')
-      +'</div>';
+      +(wait?'<span class="t2-meta wait'+(stale?' stale':'')+'">'+wait+'</span>':'');
+    return rowStack(t,detail,'',stale?'stale':'');
   }
-  var body='';
-  body+=sec('Up next',umbOrder.length,'');
-  if(!umbOrder.length)body+='<div class="empty">Nothing ready &mdash; all parked or on today\\u2019s plan.</div>';
-  else {
-    // Fill pass (roast-v2 F7): when few projects leave the prime action column
-    // short, surface each top group's next-ranked task(s) inline rather than
-    // stretching a near-empty panel. Round-robin so the spread stays even; a
-    // no-op once there are already >= FILL_TARGET groups (long backlog).
-    var FILL_TARGET=12;
-    var extra={},budget=Math.max(0,FILL_TARGET-umbOrder.length),guard=0;
-    while(budget>0&&guard<500){
-      var moved=false;
-      for(var ui=0;ui<umbOrder.length&&budget>0;ui++){
-        var gk=umbOrder[ui];
-        if((extra[gk]||0)<umb[gk].tasks.length-1){extra[gk]=(extra[gk]||0)+1;budget--;moved=true;}
+  // Tomorrow tab row: committed-for-tomorrow task with "+ Today" (pull forward)
+  // and a decommit ("−") back to the work queue.
+  function tomorrowRow(t){
+    var gi=groupInfo({project:t.project,tasks:[t]});
+    var dsp=t.group_display||gi.display,kl=t.group_klass||gi.klass;
+    var meta=[];
+    if(t.time_estimate>0)meta.push(t.time_estimate+'m');
+    if(t.work_block)meta.push(esc(t.work_block));
+    var rem=(s.todayPlan&&s.todayPlan.remainingMinutes)||0;
+    var fitsToday=t.id&&((t.time_estimate||0)<=rem);
+    var pullToday=fitsToday
+      ?'<span class="wq-pull writeable" data-kind="pull-in" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" title="Move to today">+ Today</span>'
+      :'';
+    var unsched=t.id
+      ?'<span class="wq-pull decommit writeable" data-kind="schedule-task" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" data-date="clear" title="Back to work queue">\\u2212</span>'
+      :'';
+    var detail='<span class="tchip '+kl+'" title="'+esc(t.project)+'">'+esc(dsp)+'</span>'
+      +(meta.length?'<span class="t2-meta">'+meta.join(' &middot; ')+'</span>':'');
+    return rowStack(t,detail,pullToday+unsched,'');
+  }
+  // Tabs: Up next | Tomorrow | Parked. Active tab persists across SSE re-renders
+  // on window.__wqTab. An explicit click always lands (an empty tab shows its
+  // own empty state — never silently bounce back to Up next).
+  var tab=window.__wqTab||'upnext';
+  function tabBtn(id,label,n){
+    return '<button class="wq-tab'+(tab===id?' on':'')+'" data-wqtab="'+id+'">'+label
+      +(n?' <span class="wq-tab-n">'+n+'</span>':'')+'</button>';
+  }
+  var body='<div class="wq-tabs">'
+    +tabBtn('upnext','Up next',umbOrder.length)
+    +tabBtn('tomorrow','Tomorrow',tomorrowTasks.length)
+    +tabBtn('parked','Parked',parked.length)+'</div>';
+  if(tab==='upnext'){
+    if(!umbOrder.length)body+='<div class="empty">Nothing ready &mdash; all parked, committed, or on today\\u2019s plan.</div>';
+    else {
+      // Fill pass (roast-v2 F7): when few projects leave the prime action column
+      // short, surface each top group's next-ranked task(s) inline rather than
+      // stretching a near-empty panel. Round-robin so the spread stays even.
+      var FILL_TARGET=12;
+      var extra={},budget=Math.max(0,FILL_TARGET-umbOrder.length),guard=0;
+      while(budget>0&&guard<500){
+        var moved=false;
+        for(var ui=0;ui<umbOrder.length&&budget>0;ui++){
+          var gk=umbOrder[ui];
+          if((extra[gk]||0)<umb[gk].tasks.length-1){extra[gk]=(extra[gk]||0)+1;budget--;moved=true;}
+        }
+        if(!moved)break;
+        guard++;
       }
-      if(!moved)break;
-      guard++;
+      for(var u=0;u<umbOrder.length;u++)body+=upnextRow(umb[umbOrder[u]],extra[umbOrder[u]]||0);
     }
-    for(var u=0;u<umbOrder.length;u++)body+=upnextRow(umb[umbOrder[u]],extra[umbOrder[u]]||0);
-  }
-  if(parked.length){
-    // Newest-waiting first surfaces the stalest; collapsed by default so it
-    // doesn't crowd the queue, but always present so nothing falls off the radar.
-    parked.sort(function(a,c){var da=daysWaiting(a),dc=daysWaiting(c);return (dc==null?-1:dc)-(da==null?-1:da);});
-    var staleN=0;for(var sb=0;sb<parked.length;sb++)if(isStaleDays(daysWaiting(parked[sb]),STALE_DAYS))staleN++;
-    var brows='';for(var bi=0;bi<parked.length;bi++)brows+=parkedRowHtml(parked[bi]);
-    body+='<div class="wq-blocked collapsed" id="wq-blocked">'
-      +'<div class="wq-blocked-head"><span class="wq-sec-n">'+parked.length+'</span>'
-      +'<span>Parked'+(staleN?' \\u00b7 '+staleN+' stale':'')+'</span>'
-      +'<span class="chev">\\u25b8</span></div>'
-      +'<div class="wq-blocked-list">'+brows+'</div></div>';
+  } else if(tab==='tomorrow'){
+    if(!tomorrowTasks.length)body+='<div class="empty">Nothing committed for tomorrow &mdash; use \\u201c+ Tmrw\\u201d on a task.</div>';
+    else {tomorrowTasks.sort(rankLex);for(var ti=0;ti<tomorrowTasks.length;ti++)body+=tomorrowRow(tomorrowTasks[ti]);}
+  } else {
+    if(!parked.length)body+='<div class="empty">Nothing parked.</div>';
+    else {
+      // Stalest-first so what's been waiting longest surfaces at the top.
+      parked.sort(function(a,c){var da=daysWaiting(a),dc=daysWaiting(c);return (dc==null?-1:dc)-(da==null?-1:da);});
+      for(var bi=0;bi<parked.length;bi++)body+=parkedRowHtml(parked[bi]);
+    }
   }
   $('workqueue').innerHTML=body;
   // Workload ledger — every open task by category: count + est hours + a
@@ -1670,7 +1726,7 @@ function reviewStampHtml(rv){
   return '<div class="review-stamp muted">Last reviewed: '+esc(when)+'</div>';
 }
 function renderTomorrow(d,rv){
-  d=d||{meals:[],training:{},thaw:[],planned:false,work:{committed:[],proposed:[]}};
+  d=d||{meals:[],training:{},thaw:[],planned:false};
   var meals=(d.meals||[]).slice().sort(function(a,b){return (SLOT_RANK[a.slot]||0)-(SLOT_RANK[b.slot]||0);});
   var tr=d.training||{},date=d.date||localDateStr(1);
   $('tomorrow-count').textContent=d.date?d.date.slice(5):'';
@@ -1706,21 +1762,8 @@ function renderTomorrow(d,rv){
       +'<span class="pchg" data-expand="tomorrow:training">'+(hasT?'swap':'schedule')+'</span></div>';
   }
   if(d.thaw&&d.thaw.length)h+='<div class="tmr-thaw">\\u26a0 Thaw tonight: '+esc(d.thaw.join(', '))+'</div>';
-  // Work — committed tomorrow tasks + proposed pulls.
-  var work=d.work||{committed:[],proposed:[]};
-  h+='<div class="today-sec">Work</div>';
-  function workRow(t,action,label){
-    var meta=esc(shortProj(t.project))+(t.estMin?' \\u00b7 '+t.estMin+'m':'');
-    return '<div class="prow"><span class="pcheck'+(action==='clear'?' on':'')+'"></span>'
-      +'<span class="pname" title="'+esc(t.title)+'">'+esc(t.title)+'</span>'
-      +'<span class="wproj">'+meta+'</span>'
-      +'<span class="pchg writeable" data-kind="schedule-task" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-date="'+esc(action==='clear'?'clear':date)+'">'+label+'</span></div>';
-  }
-  if(!work.committed.length&&!work.proposed.length){
-    h+='<div class="prow"><span class="pcheck"></span><span class="pname ph">no work queued</span></div>';
-  }
-  for(var w=0;w<work.committed.length;w++)h+=workRow(work.committed[w],'clear','remove');
-  for(var p=0;p<work.proposed.length;p++)h+=workRow(work.proposed[p],'commit','commit');
+  // Work for tomorrow now lives in the Work Queue's "Tomorrow" tab (commit via
+  // the "+ Tmrw" chip there) — this panel is meals/training only. (2026-06-20)
   h+=reviewStampHtml(rv);
   $('tomorrow').innerHTML=h;
 }
@@ -1768,7 +1811,24 @@ function renderCalendar(d){
    The movement arg (todayPlan.completedToday / .movedAway from the
    today-manifest) renders tasks that LEFT the plan as struck/dimmed rows
    instead of letting them silently vanish. */
-function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,movement){
+/* Per-row controls on a today task: push to tomorrow + decommit back to the
+   work queue. Both route through schedule-task (tomorrow ISO / "clear"). */
+function todayChips(t){
+  if(!t||!t.id)return '';
+  var tm=localDateStr(1);
+  return '<span class="wq-pull tmrw writeable" data-kind="schedule-task" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" data-date="'+tm+'" title="Push to tomorrow">\\u2192 Tmrw</span>'
+    +'<span class="wq-pull decommit writeable" data-kind="schedule-task" data-id="'+esc(t.id)+'" data-ws="'+esc(t.project)+'" data-path="'+esc(t.fs_path||'')+'" data-date="clear" title="Back to work queue">\\u2212</span>';
+}
+/* Shared stacked-row skeleton: title on its own (up-to-2-line) row, then a
+   detail line — project chip + meta on the left, action chips right-aligned.
+   Used by the Work Queue (up next / tomorrow / parked) and Today's plan. */
+function rowStack(t,detailLeft,acts,extraClass){
+  return '<div class="trow2'+(t.fs_path?' click':'')+(extraClass?' '+extraClass:'')+'" data-path="'+esc(t.fs_path||'')+'">'
+    +'<div class="t2-main"><span class="pri '+priClass(t.priority)+'">'+priLetter(t.priority)+'</span>'
+    +'<span class="t2-title" title="'+esc(t.title)+'">'+esc(t.title)+'</span></div>'
+    +'<div class="t2-detail">'+detailLeft+(acts?'<span class="t2-acts">'+acts+'</span>':'')+'</div></div>';
+}
+function renderTodayPlan(tasks,minutes,elId,countId,clientUnplanned,movement){
   var done=(movement&&movement.completedToday)||[];
   var moved=(movement&&movement.movedAway)||[];
   // Capacity meter: committed vs the meeting-adjusted budget, with free/over.
@@ -1792,13 +1852,7 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
       // The plan existed and everything on it was handled — completed,
       // rescheduled, or unscheduled tasks all leave Today's plan (Closures +
       // Work queue own them now). Show a single calm state instead of rows.
-      if(overdue>0)
-        // Overdue still open => the day is NOT complete; show only the triage
-        // prompt — overdue must be cleared same-day.
-        h+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-          +overdue+' overdue &middot; triage in Claude Code</div>';
-      else
-        h+='<div class="empty" style="color:var(--accent)">Complete</div>';
+      h+='<div class="empty" style="color:var(--accent)">Complete</div>';
       $(elId).innerHTML=h;return;
     }
     // 7am morning proposal — when a plan was auto-proposed for this uncommitted
@@ -1810,9 +1864,6 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
         +'<span class="prop-acts">'
         +'<button class="prop-btn acc" id="plan-accept-btn">Accept</button>'
         +'<button class="prop-btn rej" id="plan-reject-btn">Reject</button></span></div>';
-      if(prop.triageNeeded&&prop.overdueCount>0)
-        ph+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-          +prop.overdueCount+' overdue &middot; triage in Claude Code</div>';
       var pmin=0;for(var pk=0;pk<prop.tasks.length;pk++)pmin+=(prop.tasks[pk].estMin||0);
       var p0=prop.tasks[0];
       ph+='<div class="nextrow"><span class="nx">PLAN</span>'
@@ -1833,42 +1884,32 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
       ph+='</div>';
       $(elId).innerHTML=ph;return;
     }
-    // Empty pro-plan = alarm (clientUnplanned is a number). Combine overdue +
-    // no-plan + unplanned into ONE alarm box so the panel doesn't stack two
-    // near-identical yellow boxes when both signals fire.
-    if(clientUnplanned!=null){
-      var lines=['<b>No plan committed</b>'];
-      if(overdue>0)lines.push(overdue+' overdue');
-      if(clientUnplanned>0)lines.push(clientUnplanned+' high-priority client task'+(clientUnplanned===1?'':'s')+' unplanned');
-      lines.push('Run /plan-day');
-      h+='<div class="err" style="font-size:11px;line-height:1.4">'+lines.join(' &middot; ')+'</div>';
+    // Empty pro-plan. An empty Today is normal now (pull from the work queue) —
+    // only raise an alarm when high-priority CLIENT work is sitting unplanned.
+    if(clientUnplanned>0){
+      h+='<div class="err" style="font-size:11px;line-height:1.4"><b>Nothing scheduled today</b> &middot; '
+        +clientUnplanned+' high-priority client task'+(clientUnplanned===1?'':'s')+' in the work queue</div>';
     } else {
-      h+='<div class="empty">Nothing scheduled today.</div>';
+      h+='<div class="empty">Nothing scheduled today &middot; pull from the work queue.</div>';
     }
     $(elId).innerHTML=h;return;
   }
-  // Non-empty case — overdue alert (when present) sits above the task list.
-  if(overdue>0)
-    h+='<div class="err" style="background:#1f1700;border-color:#3a2e00;color:#d8b24c">'
-      +overdue+' overdue &middot; triage in Claude Code</div>';
   var sorted=tasks.slice().sort(planCmp);
   // Hero the single next action (top of the sorted plan) so the board answers
   // "what do I do next" at a glance; the rest follow as the standard list.
   var top=sorted[0];
   h+='<div class="nextrow">'
-    +'<span class="nx">NEXT</span>'
-    +'<span class="nx-title" title="'+esc(top.title)+'">'+esc(top.title)+'</span>'
-    +'<span class="nx-meta">'+(top.work_block?esc(top.work_block)+' &middot; ':'')
+    +'<div class="nx-main"><span class="nx">NEXT</span>'
+      +'<span class="nx-title" title="'+esc(top.title)+'">'+esc(top.title)+'</span></div>'
+    +'<div class="nx-detail"><span class="nx-meta">'+(top.work_block?esc(top.work_block)+' &middot; ':'')
       +esc(shortProj(top.project))+(top.time_estimate?' &middot; '+top.time_estimate+'m':'')+'</span>'
+      +'<span class="t2-acts">'+todayChips(top)+'</span></div>'
     +'</div>';
   for(var i=1;i<sorted.length;i++){
     var t=sorted[i];
-    h+='<div class="trow">'
-      +'<span class="pri '+priClass(t.priority)+'">'+priLetter(t.priority)+'</span>'
-      +'<span class="trow-title" title="'+esc(t.title)+'">'+esc(t.title)+'</span>'
-      +(t.work_block?'<span class="tag">'+esc(t.work_block)+'</span>':'')
-      +'<span class="trow-proj" title="'+esc(t.project)+'">'+esc(shortProj(t.project))+'</span>'
-      +'<span class="trow-est">'+(t.time_estimate?t.time_estimate+'m':'-')+'</span></div>';
+    var detail=(t.work_block?'<span class="tag">'+esc(t.work_block)+'</span>':'')
+      +'<span class="t2-meta">'+esc(shortProj(t.project))+(t.time_estimate?' &middot; '+t.time_estimate+'m':'')+'</span>';
+    h+=rowStack(t,detail,todayChips(t),'');
   }
   $(elId).innerHTML=h;
 }
@@ -1878,7 +1919,7 @@ function renderTodayPlan(tasks,overdue,minutes,elId,countId,clientUnplanned,move
 function render(s){
   setGeneratedCue(s.generated);
   renderStats(s);
-  renderTodayPlan(s.todayPlan.professional,s.todayPlan.overduePro,s.todayPlan.committedMinutesPro,'today-pro','today-pro-count',clientUnplannedCount(s),s.todayPlan);
+  renderTodayPlan(s.todayPlan.professional,s.todayPlan.committedMinutesPro,'today-pro','today-pro-count',clientUnplannedCount(s),s.todayPlan);
   renderBacklog(s.backlog);
   renderWorkQueue(s);
   renderTrend(s.trend);
@@ -1971,16 +2012,23 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeOverlay
 /* Work-queue clicks — a task row opens its detail (via /task), a client row
    opens the rollup overlay. */
 $('workqueue').addEventListener('click',function(e){
-  // Pull-in chip ("+ Today") sits inside a .trow — catch it first and stop, so
-  // the click commits the task to today instead of opening the task detail.
+  // Tab switch — persist the choice so an SSE refresh keeps the active tab.
+  var tabEl=e.target.closest('.wq-tab');
+  if(tabEl){window.__wqTab=tabEl.getAttribute('data-wqtab');if(lastSnapshot)render(lastSnapshot);return;}
+  // Schedule chips (+ Today / + Tmrw / −) sit inside a .trow — catch first and
+  // stop, so the click schedules instead of opening the task detail.
   var pull=e.target.closest('.writeable');
   if(pull){e.stopPropagation();writeAction(pull,$('workqueue'));return;}
-  var bh=e.target.closest('.wq-blocked-head');
-  if(bh){var grp=bh.closest('.wq-blocked');if(grp)grp.classList.toggle('collapsed');return;}
   var more=e.target.closest('.upnext-more.click');
   if(more){openRollup(more.getAttribute('data-rollup'));return;}
-  var trow=e.target.closest('.trow.click');
+  var trow=e.target.closest('.trow.click,.trow2.click');
   if(trow){var p=trow.getAttribute('data-path');if(p)openTask(p);return;}
+});
+/* Today's plan — per-row schedule chips (→ Tmrw / decommit). The proposal
+   accept/reject buttons have their own ids and are not .writeable, so no clash. */
+$('today-pro').addEventListener('click',function(e){
+  var w=e.target.closest('.writeable');
+  if(w){e.stopPropagation();writeAction(w,$('today-pro'));return;}
 });
 
 /* ---- Write-back: meal/training/task rows are clickable toggles ----
@@ -2039,12 +2087,34 @@ function applyOptimistic(s,payload){
     var ttitle='Training \\u2014 '+payload.session;
     if(payload.date===localDateStr(0)){if(s.training){s.training.todayScheduled=true;s.training.todayTitle=ttitle;s.training.todayId='opt';s.training.todayComplete=false;}}
     else if(s.tomorrow&&s.tomorrow.training){s.tomorrow.training.scheduled={id:'opt',title:ttitle,status:'open'};}
+  }else if(k==='pull-in'){
+    applySchedOptimistic(s,payload.id,localToday(),payload.path);
   }else if(k==='schedule-task'){
-    var w=s.tomorrow&&s.tomorrow.work;if(!w)return;w.committed=w.committed||[];w.proposed=w.proposed||[];
-    if(payload.date==='clear'){w.committed=w.committed.filter(function(x){return x.id!==payload.id;});}
-    else{var idx=-1;for(var p=0;p<w.proposed.length;p++)if(w.proposed[p].id===payload.id){idx=p;break;}
-      if(idx>=0){w.committed.push(w.proposed[idx]);w.proposed.splice(idx,1);}}
+    applySchedOptimistic(s,payload.id,payload.date==='clear'?'':payload.date,payload.path);
   }
+}
+/* Optimistically move a work task between the backlog and today's plan when its
+   scheduled_date changes (today / tomorrow / cleared). Mutates the task in the
+   backlog groups (so the Work Queue tabs re-split) and the todayPlan membership
+   + capacity meter. The server refresh reconciles to the exact set. */
+function applySchedOptimistic(s,id,date,fpath){ // date: ISO today | ISO tomorrow | '' (clear)
+  if(!s||!s.backlog||!s.backlog.groups)return;
+  // Match on fs_path when supplied (collision-proof — fs_ids repeat across
+  // folders); fall back to id for legacy callers.
+  function hit(t){return fpath?(t.fs_path===fpath):(t.id===id);}
+  var today=localToday(),task=null,groups=s.backlog.groups;
+  for(var i=0;i<groups.length;i++)for(var j=0;j<groups[i].tasks.length;j++)
+    if(hit(groups[i].tasks[j])){task=groups[i].tasks[j];task.scheduled_date=date||null;}
+  var tp=s.todayPlan;if(!tp)return;
+  var pro=tp.professional||(tp.professional=[]),inPlan=-1;
+  for(var k=0;k<pro.length;k++)if(hit(pro[k])){inPlan=k;break;}
+  if(date===today){
+    if(inPlan<0&&task){pro.push(task);tp.committedMinutesPro=(tp.committedMinutesPro||0)+(task.time_estimate||0);}
+  }else if(inPlan>=0){
+    var rt=pro[inPlan];pro.splice(inPlan,1);
+    tp.committedMinutesPro=Math.max(0,(tp.committedMinutesPro||0)-(rt.time_estimate||0));
+  }
+  tp.remainingMinutes=Math.max(0,(tp.availableMinutes||0)-(tp.committedMinutesPro||0));
 }
 function writeAction(row,container){
   if(!row)return;
@@ -2064,13 +2134,15 @@ function writeAction(row,container){
     var tday=(tdate===localDateStr(0)?'today':'tomorrow');
     key='train:'+tdate;collapse=tday+':training';
   }else if(kind==='schedule-task'){
-    var sid=row.getAttribute('data-id'),sws=row.getAttribute('data-ws'),sdate=row.getAttribute('data-date');if(!sid||!sws||!sdate)return;
-    payload={kind:kind,id:sid,workspacePath:sws,date:sdate};
-    key='sched:'+sid;
+    var sid=row.getAttribute('data-id'),sws=row.getAttribute('data-ws'),sdate=row.getAttribute('data-date'),spath=row.getAttribute('data-path');if(!sid||!sdate)return;
+    // fs_path is the collision-proof write target (fs_ids repeat across folders);
+    // workspacePath is the legacy fallback the server uses when path is absent.
+    payload={kind:kind,id:sid,workspacePath:sws,path:spath||'',date:sdate};
+    key='sched:'+(spath||sid);
   }else if(kind==='pull-in'){
-    var lid=row.getAttribute('data-id'),lws=row.getAttribute('data-ws');if(!lid||!lws)return;
-    payload={kind:kind,id:lid,workspacePath:lws};
-    key='pull:'+lid;
+    var lid=row.getAttribute('data-id'),lws=row.getAttribute('data-ws'),lpath=row.getAttribute('data-path');if(!lid)return;
+    payload={kind:kind,id:lid,workspacePath:lws,path:lpath||''};
+    key='pull:'+(lpath||lid);
   }else return;
   // OPTIMISTIC + DEBOUNCED: flip instantly, record the latest intent for this
   // target, and (re)start a settle timer. The write fires once, for the final

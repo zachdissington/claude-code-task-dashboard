@@ -49,8 +49,6 @@ export interface TodayPlan {
   personal: BurndownTask[];
   committedMinutesPro: number;
   committedMinutesPersonal: number;
-  overduePro: number; // scheduled before today, still open
-  overduePersonal: number;
   /** Daily task-work budget (minutes) — DAILY_CAPACITY_MIN, via burndown.py. */
   dailyCapacityMin: number;
   /** Budget left after meetings: dailyCapacityMin − meetingMinutesToday. */
@@ -269,15 +267,6 @@ export interface TomorrowTraining {
   restRecommended: boolean;
   rotation: string[]; // full session list — drives the swap control
 }
-/** A work task surfaced in the Tomorrow "Work" block. */
-export interface TomorrowWorkItem {
-  id: string;
-  title: string;
-  project: string; // workspace_path — the schedule-task write target
-  priority: string;
-  /** time_estimate minutes (0 when unset) — sizes the pull decision. */
-  estMin: number;
-}
 /** The forward Tomorrow lane — pick meals + confirm/swap training on the board. */
 export interface TomorrowLane {
   date: string; // YYYY-MM-DD (tomorrow, local)
@@ -285,8 +274,6 @@ export interface TomorrowLane {
   meals: TomorrowMealSlot[]; // the 5 feedings, in order
   training: TomorrowTraining;
   thaw: string[]; // recipe names among the picks that need thawing tonight
-  /** Work tasks: committed (scheduled for tomorrow) + proposed pulls (unscheduled). */
-  work?: { committed: TomorrowWorkItem[]; proposed: TomorrowWorkItem[] };
   error?: string;
 }
 

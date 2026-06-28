@@ -8,16 +8,17 @@
  * is reflected immediately, not after the TTL.
  */
 
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config } from "../config.js";
 import { logger } from "../logger.js";
-import { runBurndown, runPythonJson } from "./python-bridge.js";
+import { runBurndown, runPythonAction, runPythonJson } from "./python-bridge.js";
 import {
   readCaptureQueue,
   readSessionBindings,
   readShippedQueue,
 } from "./state-files.js";
-import { upsertToday } from "./trend-store.js";
+import { upsertToday, readHistory } from "./trend-store.js";
 import { recordAndDiffToday, EMPTY_MOVEMENT } from "./today-manifest.js";
 import { readTokenSpend } from "./token-reader.js";
 import { readApiSpend } from "./anthropic-api-reader.js";
@@ -99,47 +100,46 @@ function localToday(): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+/**
+ * Daily stale-schedule sweep — the "auto plan-day" that replaced overdue/triage.
+ * Once per day, when the date advances, clear past-due `scheduled_date` back to
+ * the Work Queue via sweep-stale-schedule.py. Runs here (the always-on server),
+ * never in a Claude session — so it respects stay-quiet-on-session-start.
+ *
+ * Records the attempt to `.tmp/last_sweep.json` BEFORE running so a failing
+ * sweep can't re-spawn python on every 4s snapshot; a real failure simply isn't
+ * retried until tomorrow (the dashboard already hides past-due as backlog, so a
+ * missed sweep is cosmetic, not a correctness gap). Fault-tolerant throughout.
+ */
+const LAST_SWEEP_PATH = join(config.TMP_DIR, "last_sweep.json");
+async function maybeSweep(today: string): Promise<void> {
+  try {
+    const j = JSON.parse(await readFile(LAST_SWEEP_PATH, "utf-8"));
+    if (j && j.date === today) return; // already swept today
+  } catch {
+    /* missing / malformed marker → sweep */
+  }
+  try {
+    await writeFile(LAST_SWEEP_PATH, JSON.stringify({ date: today, at: new Date().toISOString() }));
+  } catch (err) {
+    logger.warn({ err }, "snapshot.sweep-marker-write-failed");
+  }
+  const r = await runPythonAction(config.SWEEP_STALE_SCRIPT, ["--date", today]);
+  if (!r.ok) logger.warn({ stderr: r.stderr.trim() }, "snapshot.sweep-failed");
+  else logger.info({ out: r.stdout.trim().slice(0, 200) }, "snapshot.sweep-ok");
+}
+
 // Classification moved upstream (2026-06-13): burndown.py now drops auto-generated
 // daily ROUTINE rows (meal slots / training session) via is_routine_task, so the
 // groups reaching here are real work only. meal/training PROJECT tasks group like
 // any project and count toward the backlog — no folder-based exclusion here. The
 // right-rail meal/training panels are fed independently by meal-reader/training-reader.
 
-const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
-
-/**
- * Tomorrow's work: committed = professional tasks scheduled for tomorrow;
- * proposed = top 8 unscheduled professional tasks by priority (deterministic so
- * the list doesn't churn between refreshes) — the right-rail queue to pull
- * tomorrow's plan from. estMin feeds the row meta so a pull is a sized choice.
- */
-type TomorrowWorkRow = { id: string; title: string; project: string; priority: string; estMin: number };
-function deriveTomorrowWork(groups: BurndownGroup[]): {
-  committed: TomorrowWorkRow[];
-  proposed: TomorrowWorkRow[];
-} {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  const tomorrow = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const committed: TomorrowWorkRow[] = [];
-  const unscheduled: TomorrowWorkRow[] = [];
-  for (const g of groups) {
-    for (const t of g.tasks) {
-      const item = { id: t.id, title: t.title, project: t.project, priority: t.priority || "", estMin: t.time_estimate || 0 };
-      if ((t.scheduled_date || "").slice(0, 10) === tomorrow) committed.push(item);
-      else if (!t.scheduled_date) unscheduled.push(item);
-    }
-  }
-  unscheduled.sort(
-    (a, b) => (PRIORITY_RANK[a.priority] ?? 3) - (PRIORITY_RANK[b.priority] ?? 3) || a.id.localeCompare(b.id),
-  );
-  return { committed, proposed: unscheduled.slice(0, 8) };
-}
-
 /**
  * Derive the committed daily plan from the open-task set burndown already
- * produced — tasks scheduled for today, split professional vs personal, plus
- * an overdue count (scheduled before today, still open). No extra scan.
+ * produced — tasks scheduled for today, split professional vs personal. Past-due
+ * tasks are NOT counted as overdue (the concept was retired 2026-06-20); they
+ * simply aren't "today" and live in the Work Queue. No extra scan.
  */
 function deriveTodayPlan(groups: BurndownGroup[], bindings: BindingRecord[] = []): TodayPlan {
   const today = localToday();
@@ -156,8 +156,6 @@ function deriveTodayPlan(groups: BurndownGroup[], bindings: BindingRecord[] = []
     personal: [],
     committedMinutesPro: 0,
     committedMinutesPersonal: 0,
-    overduePro: 0,
-    overduePersonal: 0,
     dailyCapacityMin: 0, // real values set by the caller (needs calendar + budget)
     availableMinutes: 0,
     remainingMinutes: 0,
@@ -184,10 +182,9 @@ function deriveTodayPlan(groups: BurndownGroup[], bindings: BindingRecord[] = []
           tp.professional.push(t);
           tp.committedMinutesPro += t.time_estimate || 0;
         }
-      } else if (sd < today) {
-        if (personal) tp.overduePersonal++;
-        else tp.overduePro++;
       }
+      // Past-due (sd < today) is no longer special-cased — the task stays in the
+      // Work Queue and the daily sweep clears its stale date. (2026-06-20)
     }
   }
   return tp;
@@ -266,6 +263,10 @@ export function invalidate(): void {
 async function build(): Promise<DashboardSnapshot> {
   const generated = new Date().toISOString();
 
+  // Clear any past-due scheduled_date back to the Work Queue once per day BEFORE
+  // reading tasks, so the swept state is reflected in this very snapshot.
+  await maybeSweep(localToday());
+
   // Burndown is the one source that throws on its own; every other reader is
   // fault-tolerant by construction, and `safe()` is a backstop for the rest.
   const [
@@ -316,8 +317,8 @@ async function build(): Promise<DashboardSnapshot> {
   // INCLUDE meal/training PROJECT tasks (onboarding, infra) grouped by project.
   // The right-rail meal/training panels are fed separately (meal/training-reader). (2026-06-13)
   const allGroups: BurndownGroup[] = burndownResult.ok ? burndownResult.r.groups : [];
-  // Attach tomorrow's work (committed + proposed pulls) from the full task set.
-  tomorrow.work = deriveTomorrowWork(allGroups);
+  // Tomorrow-committed work now lives in the Work Queue's "Tomorrow" tab, sourced
+  // from the backlog groups directly — the Tomorrow panel is meals/training only.
   const proGroups = allGroups;
   const proTotal = proGroups.reduce((sum, g) => sum + g.count, 0);
 
@@ -336,9 +337,16 @@ async function build(): Promise<DashboardSnapshot> {
   let trendPoints: TrendPoint[];
   let trendError: string | undefined;
   try {
-    const perProject: Record<string, number> = {};
-    for (const g of backlog.groups) perProject[g.project] = g.count;
-    trendPoints = await upsertToday(backlog.total, perProject);
+    // Only record a point when burndown actually succeeded with a real backlog.
+    // A failed/empty burndown would otherwise persist a spurious 0 that draws a
+    // fake spike-to-zero on the trend line (and pins the y-axis floor to 0).
+    if (burndownResult.ok && backlog.total > 0) {
+      const perProject: Record<string, number> = {};
+      for (const g of backlog.groups) perProject[g.project] = g.count;
+      trendPoints = await upsertToday(backlog.total, perProject);
+    } else {
+      trendPoints = await readHistory();
+    }
   } catch (err) {
     trendPoints = [];
     trendError = String(err);

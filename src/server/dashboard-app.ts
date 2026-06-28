@@ -69,6 +69,21 @@ function isPlannableDate(date: string): boolean {
 function isSafeWorkspacePath(p: string): boolean {
   return !!p && !p.includes("..") && !/^([a-zA-Z]:|[/\\])/.test(p);
 }
+/**
+ * A safe absolute task-file path: under the workspace root, a `.md` file inside
+ * a `tasks/` or `refs/` directory, no traversal. This is the collision-proof
+ * write target — fs_ids repeat across folders, so the dashboard resolves writes
+ * by the snapshot's `fs_path` rather than the ambiguous id. (Passed to
+ * `update-task.py --file`.)
+ */
+function isSafeTaskPath(p: string): boolean {
+  if (!p || p.includes("..") || !p.toLowerCase().endsWith(".md")) return false;
+  const norm = resolve(p).replace(/\\/g, "/").toLowerCase();
+  const rootNorm = resolve(WORKSPACE_ROOT).replace(/\\/g, "/").toLowerCase();
+  if (!norm.startsWith(rootNorm + "/")) return false;
+  const segs = norm.split("/");
+  return segs.includes("tasks") || segs.includes("refs");
+}
 
 const MEAL_SLOT_FLAGS: Record<string, string> = {
   breakfast: "--breakfast",
@@ -306,36 +321,47 @@ self.addEventListener('fetch',e=>{
     } else if (body.kind === "schedule-task") {
       // Commit a work task to tomorrow (or clear it) — sets scheduled_date only.
       const id = String(body.id || "");
+      const path = String(body.path || "");
       const ws = String(body.workspacePath || "");
       const date = String(body.date || "");
       if (!TASK_ID_RE.test(id)) {
         return reply.code(400).send({ ok: false, error: "invalid task id" });
       }
-      if (!isSafeWorkspacePath(ws)) {
-        return reply.code(400).send({ ok: false, error: "invalid workspacePath" });
-      }
       if (date !== tomorrowLocal() && date !== "clear") {
         return reply.code(400).send({ ok: false, error: "date must be tomorrow or clear" });
       }
-      args = [id, "--scheduled-date", date === "clear" ? "clear" : date, "--workspace-path", ws];
+      const sched = date === "clear" ? "clear" : date;
+      // Path-first (collision-proof) when the row supplies fs_path; fall back to
+      // the legacy id + workspace_path disambiguation otherwise.
+      if (path) {
+        if (!isSafeTaskPath(path)) {
+          return reply.code(400).send({ ok: false, error: "invalid task path" });
+        }
+        args = [id, "--file", path, "--scheduled-date", sched];
+      } else {
+        if (!isSafeWorkspacePath(ws)) {
+          return reply.code(400).send({ ok: false, error: "invalid workspacePath" });
+        }
+        args = [id, "--scheduled-date", sched, "--workspace-path", ws];
+      }
       script = config.UPDATE_TASK_SCRIPT;
     } else if (body.kind === "pull-in") {
       // Pull a work-queue task onto TODAY — gated by remaining daily capacity so
       // the board can't be re-overcommitted. Reads the same numbers the meter
       // shows (snapshot.todayPlan), then sets scheduled_date=today.
       const id = String(body.id || "");
+      const path = String(body.path || "");
       const ws = String(body.workspacePath || "");
       if (!TASK_ID_RE.test(id)) {
         return reply.code(400).send({ ok: false, error: "invalid task id" });
-      }
-      if (!isSafeWorkspacePath(ws)) {
-        return reply.code(400).send({ ok: false, error: "invalid workspacePath" });
       }
       const snap = await getSnapshot();
       const remaining = snap.todayPlan.remainingMinutes;
       let est = 0;
       for (const g of snap.backlog.groups) {
-        const hit = g.tasks.find((t) => t.id === id);
+        // Match on fs_path when supplied (collision-proof — fs_ids repeat), so
+        // the RIGHT task's estimate gates capacity; else fall back to id.
+        const hit = g.tasks.find((t) => (path ? t.fs_path === path : t.id === id));
         if (hit) { est = hit.time_estimate || 0; break; }
       }
       if (est > remaining) {
@@ -343,7 +369,17 @@ self.addEventListener('fetch',e=>{
           .code(400)
           .send({ ok: false, error: `not enough capacity: ${remaining}m free, task needs ${est}m` });
       }
-      args = [id, "--scheduled-date", todayLocal(), "--workspace-path", ws];
+      if (path) {
+        if (!isSafeTaskPath(path)) {
+          return reply.code(400).send({ ok: false, error: "invalid task path" });
+        }
+        args = [id, "--file", path, "--scheduled-date", todayLocal()];
+      } else {
+        if (!isSafeWorkspacePath(ws)) {
+          return reply.code(400).send({ ok: false, error: "invalid workspacePath" });
+        }
+        args = [id, "--scheduled-date", todayLocal(), "--workspace-path", ws];
+      }
       script = config.UPDATE_TASK_SCRIPT;
     } else if (body.kind === "weight-log") {
       // Log the morning weigh-in → log_weight.py (the shared writer; same script

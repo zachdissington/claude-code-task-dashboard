@@ -113,6 +113,11 @@ export const config = {
    *  endpoint shells out to this so there is one writer implementation, no drift. */
   UPDATE_TASK_SCRIPT: join(WORKSPACE_ROOT, ".claude", "scripts", "update-task.py"),
 
+  /** Daily stale-schedule sweep — clears past-due scheduled_date back to the
+   *  Work Queue (the "auto plan-day" that replaced overdue/triage). Fired lazily
+   *  by snapshot.ts when the date advances. */
+  SWEEP_STALE_SCRIPT: join(WORKSPACE_ROOT, ".claude", "scripts", "sweep-stale-schedule.py"),
+
   /** Shared secret guarding every write (POST /action). Empty ⇒ writes disabled
    *  (fail-safe). Set DASHBOARD_WRITE_TOKEN in the workspace .env. */
   WRITE_TOKEN: process.env.DASHBOARD_WRITE_TOKEN || "",
